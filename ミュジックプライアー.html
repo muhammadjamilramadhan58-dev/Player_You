@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AuraPlayer & Lyric Synchronizer</title>
+  <!-- Google Fonts & FontAwesome -->
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="ミュージックプライアー.css">
+  <link rel="icon" type="image/png/jpeg" href="C:\Users\WIN 10\Documents\Muhammad Jamil Ramadhan WEB\AuraPlayer_Image.jpeg">
+</head>
+<body>
+  <!-- Dynamic Background Blur -->
+  <div class="bg-blur" id="bgBlur"></div>
+
+  <div class="app-container">
+    <!-- Header Navigation -->
+    <header class="app-header">
+      <div class="brand">
+        <i class="fa-solid fa-wave-square brand-icon"></i>
+        <span>AuraPlayer</span>
+      </div>
+      <nav class="nav-tabs">
+        <button class="nav-btn active" data-tab="player"><i class="fa-solid fa-music"></i> Player</button>
+        <button class="nav-btn" data-tab="sync"><i class="fa-solid fa-wand-magic-sparkles"></i> Sync Lirik</button>
+        <button class="nav-btn" data-tab="playlist"><i class="fa-solid fa-list-ul"></i> Library</button>
+      </nav>
+      <div class="file-inputs">
+        <label for="filePicker" class="btn btn-secondary" title="Pilih File Musik">
+          <i class="fa-solid fa-file-audio"></i> <span>Pilih File</span>
+        </label>
+        <input type="file" id="filePicker" accept="audio/*" multiple hidden>
+
+        <label for="folderPicker" class="btn btn-secondary" title="Pilih Folder Musik">
+          <i class="fa-solid fa-folder-open"></i> <span>Pilih Folder</span>
+        </label>
+        <input type="file" id="folderPicker" webkitdirectory directory multiple hidden>
+      </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+      <!-- TAB 1: PLAYER, VISUALIZER & QUEUE -->
+      <section class="tab-pane active" id="tab-player">
+        <div class="player-grid">
+          <div class="player-left">
+            <div class="player-left-top">
+              <div class="album-art-container">
+                <div class="album-art" id="albumArt">
+                  <i class="fa-solid fa-compact-disc disc-icon"></i>
+                </div>
+                <canvas id="visualizerCanvas"></canvas>
+              </div>
+              <div class="track-details">
+                <!-- Judul lagu dengan wadah marquee -->
+                <div class="track-title-container">
+                  <h1 class="track-title" id="trackTitle">Tidak ada lagu yang diputar</h1>
+                </div>
+                <p class="track-artist" id="trackArtist">Silakan pilih file atau folder musik</p>
+              </div>
+            </div>
+
+            <!-- Antrian Lagu (Queue Viewer) -->
+            <div class="queue-container">
+              <div class="queue-header">
+                <span><i class="fa-solid fa-list"></i> Antrian Putar (<span id="queueCount">0</span>)</span>
+              </div>
+              <div class="queue-list" id="queueList">
+                <div class="queue-empty">Antrian kosong</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Lirik Display ala Spotify -->
+          <div class="player-right">
+            <div class="lyrics-header">
+              <span>Lirik Terkait</span>
+              <label for="lrcFilePicker" class="btn-text" title="Muat File .lrc">
+                <i class="fa-solid fa-upload"></i> Impor .LRC
+              </label>
+              <input type="file" id="lrcFilePicker" accept=".lrc" hidden>
+            </div>
+            <div class="lyrics-container" id="lyricsContainer">
+              <div class="lyrics-empty">
+                <i class="fa-solid fa-quote-left"></i>
+                <p>Belum ada lirik tersinkron.<br>Buka tab "Sync Lirik" untuk membuat sinkronisasi lirik.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 2: LYRIC SYNCHRONIZER -->
+      <section class="tab-pane" id="tab-sync">
+        <div class="sync-grid">
+          <div class="sync-card">
+            <h3><span class="step-num">1</span> Masukkan Lirik Mentah</h3>
+            <p class="sub-text">Tempel lirik lagu lengkap (satu baris per kalimat) di bawah ini:</p>
+            <textarea id="rawLyricsInput" placeholder="Contoh:&#10;Di suatu malam yang dingin&#10;Teringat kenangan lama..."></textarea>
+            <button class="btn btn-primary" id="btnPrepareSync" style="width: 100%; margin-top: 10px;">
+              <i class="fa-solid fa-bolt"></i> Siapkan Mode Sinkronisasi
+            </button>
+          </div>
+
+          <div class="sync-card">
+            <h3><span class="step-num">2</span> Sinkronkan Sekali Ketuk</h3>
+            <p class="sub-text">Putar lagu, lalu ketuk tombol besar / tekan <b>[SPASI]</b> tepat saat baris aktif dinyanyikan.</p>
+            
+            <div class="tap-zone" id="tapZone">
+              <div class="tap-hint">SINKRONKAN BARIS BERIKUTNYA:</div>
+              <div class="current-sync-line" id="currentSyncLine">Siapkan mode sinkronisasi terlebih dahulu</div>
+              <button class="btn-tap" id="btnTapSync" disabled>
+                <i class="fa-solid fa-fingerprint"></i>
+                <span>TAP SINKRON</span>
+              </button>
+              <div class="next-sync-line" id="nextSyncLine">Baris berikutnya: -</div>
+            </div>
+
+            <div class="sync-actions">
+              <button class="btn btn-secondary" id="btnResetSync"><i class="fa-solid fa-rotate-left"></i> Reset</button>
+              <button class="btn btn-secondary" id="btnUndoSync"><i class="fa-solid fa-arrow-rotate-left"></i> Batal Terakhir</button>
+            </div>
+
+            <div class="export-box">
+              <h4>Opsi Simpan / Ekspor Lirik:</h4>
+              <div class="export-btns">
+                <button class="btn btn-outline" id="btnExportLrc"><i class="fa-solid fa-file-code"></i> Simpan Terpisah (.LRC)</button>
+                <button class="btn btn-outline" id="btnExportJson"><i class="fa-solid fa-box-archive"></i> Simpan Gabung (.JSON)</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 3: PLAYLIST / LIBRARY -->
+      <section class="tab-pane" id="tab-playlist">
+        <div class="playlist-container">
+          <div class="playlist-header">
+            <h3>Daftar Putar Musik</h3>
+            <span class="playlist-count" id="playlistCount">0 Lagu</span>
+          </div>
+          <div class="playlist-list" id="playlistItems">
+            <div class="empty-playlist">
+              <i class="fa-solid fa-folder-open"></i>
+              <p>Belum ada file musik yang dimuat.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Bottom Audio Player Controls -->
+    <footer class="player-controls">
+      <div class="progress-container" id="progressContainer">
+        <div class="progress-bar" id="progressBar"></div>
+      </div>
+
+      <div class="controls-wrapper">
+        <div class="now-playing-mini">
+          <div class="mini-title-container">
+            <span class="mini-title" id="miniTitle">Tidak Ada Lagu</span>
+          </div>
+          <span class="mini-artist" id="miniArtist">-</span>
+        </div>
+
+        <div class="main-buttons">
+          <button class="btn-ctrl" id="btnShuffle" title="Shuffle (Acak)"><i class="fa-solid fa-shuffle"></i></button>
+          <button class="btn-ctrl" id="btnPrev" title="Sebelumnya"><i class="fa-solid fa-backward-step"></i></button>
+          <button class="btn-ctrl btn-play" id="btnPlayPause" title="Putar/Jeda"><i class="fa-solid fa-play"></i></button>
+          <button class="btn-ctrl" id="btnNext" title="Berikutnya"><i class="fa-solid fa-forward-step"></i></button>
+          <button class="btn-ctrl" id="btnRepeat" title="Ulangi (Matikan/Semua/Satu)"><i class="fa-solid fa-repeat"></i></button>
+        </div>
+
+        <div class="time-and-volume">
+          <span class="time-display" id="timeDisplay">00:00 / 00:00</span>
+          <div class="volume-container">
+            <i class="fa-solid fa-volume-high" id="volumeIcon"></i>
+            <input type="range" id="volumeRange" min="0" max="1" step="0.01" value="0.8">
+          </div>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <audio id="audioEngine"></audio>
+  <script src="ミュジックプライアー.js"></script>
+</body>
+</html>
